@@ -1,5 +1,13 @@
 ## What's the Simple Template Library?
-Simple Template is a single-header, small, MSVC / GCC / Clang compatible, C++14 template metaprogramming library. The development started as I needed more powerful metaprogramming tools than `<type_traits>` in various projects. Boost::MPL felt too old-style as of C++14 era, and I was reluctant to pull in Boost dependencies anyway. On the other hand, MSVC was not ready for Boost::Hana due to its known lack of supports to several key language features. This library was heavily inspired by Boost::Hana's type constant approach and techniques from other template libraries.
+Simple Template is a single-header, small, MSVC / GCC / Clang compatible, C++14 template metaprogramming library. 
+
+* Type as consts: `typetag<int> == typetag<int>`
+* Type transformation as constexpr operations: 
+`typetag<int&> - lvalue_reference_tag + const_qualifier == typetag<const int>`
+* Extensible type computation as constexpr functions taking and returning type consts
+* Type branching as tag dispatching or type predicate specialization
+
+The development started as I needed more powerful metaprogramming tools than `<type_traits>` in various projects. Boost::MPL felt too old-style as of C++14 era, and I was reluctant to pull in Boost dependencies anyway. On the other hand, MSVC was not ready for Boost::Hana due to its known lack of supports to several key language features. This library was heavily inspired by Boost::Hana's type constant approach and techniques from other template libraries.
 
 ## What to Expect
 The library provides easy to use wrappers and functions for two main use cases in template metaprogramming: type transformation and type branching. Fundamentally, every type-related action in generic programming falls into one of the two categories. Type transformations usually involve trait classes and nested types, and branching or dispatching mainly use template specialization, overloading and SFINAE. Writing generic code using these techniques are difficult and tedious work. Simple Template aims to improve these common use cases by providing cleaner and more natural syntax based on C++14 template consts.
@@ -7,9 +15,9 @@ The library provides easy to use wrappers and functions for two main use cases i
 ## Supported Compilers
 Basically all compilers that are C++14 compliant. The development is driven by multi-platform unit testing to guarantee compatibility on all big-3:
 
-Visual C++: VS2015, recommended to install the latest VS2017
-GCC: > 5.0
-Clang: > 3.4
+* Visual C++: VS2015, recommended to install the latest VS2017
+* GCC: > 5.0
+* Clang: > 3.4
 
 ## How to Use
 Include the single header, `simpletemplate.hpp` and you are good to go.
@@ -182,11 +190,6 @@ void my_generic_func(T&& t)
 }
 ```
 
-### Type List
-TBD
-
-### Integral Constant
-
-##Conclusion
+## Conclusion
 Happy templating!
 
