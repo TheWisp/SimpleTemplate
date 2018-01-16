@@ -8,16 +8,17 @@ The library provides easy to use wrappers and functions for two main use cases i
 Basically all compilers that are C++14 compliant. The development is driven by multi-platform unit testing to guarantee compatibility on all big-3:
 
 Visual C++: VS2015, recommended to install the latest VS2017
-
 GCC: > 5.0
-
 Clang: > 3.4
 
 ## How to Use
 Include the single header, `simpletemplate.hpp` and you are good to go.
 
 Do note you need to explicitly use the integral constant operator in order to use numeric compile-time constants such as `0_c`:
-`using ST::operator""_c; //in your namespace`
+
+```cpp
+using ST::operator""_c; //in your namespace
+```
 
 ## Tutorial
 `TypeTag<T>` and `typetag<T>` are the basic building blocks here. For better distinction, TitleCase symbols here represent types and snake_cases represent values, which can be variables, consts or functions. `TypeTag<T>` is a wrapper type that contains type predicates and trait functions for `T`, and `typetag<T>` is the only constexpr instance of the wrapper, that can be used as a value, passed around, or forcing template argument deduction.
@@ -36,9 +37,9 @@ Alternatively, it is possible to use TOTYPE(tag) macro for this.
 Type tag of the same type `T` are equal. Type tag of different types are unequal. Types are strictly compared, i.e. sensitive to const-volatile modifiers and references. The comparisons happens at compile time and can be tested in `static_assert`s:
 
 ```cpp
-stypetag<int> == typetag<int>                                //true
-stypetag<T> == typetag<int>                                  //true if T is int
-stypetag<const std::string&> == typetag<std::string>         //false
+typetag<int> == typetag<int>                                //true
+typetag<T> == typetag<int>                                  //true if T is int
+typetag<const std::string&> == typetag<std::string>         //false
 ```
 
 ### Type Traits
@@ -148,16 +149,21 @@ static_assert(GenericClassExample<double>::x == 2, "");
 Tag-dispatching is generally cleaner and easier to use than SFINAE, especially when there is more than an instance / a set of trait to test, imagine:
 
 ```cpp
-template<class T, class U> void generic_impl(T t, IntegralTag, U u, IntegralTag); //does something with integral op integral
-template<class T, class U> void generic_impl(T t, ClassTag, U u, IntegralTag); //does something with class.func(integral)
-template<class T, class U> void generic(T t, U u) { return generic_impl(t, type_category(t), u, type_category(u)); }
+template<class T, class U> 
+void generic_impl(T t, IntegralTag, U u, IntegralTag); //does something with integral op integral
+
+template<class T, class U> 
+void generic_impl(T t, ClassTag, U u, IntegralTag); //does something with class.func(integral)
+
+template<class T, class U> 
+void generic(T t, U u) { return generic_impl(t, type_category(t), u, type_category(u)); }
 ```
 
 Such code would be very difficult and even ugly to write with SFINAE.
 
 ### Type Transformation
 Now that we've converted types and their properties to tag values, type transformations can benefit from much better syntaxes with operators.
-Do you remember `lvalue_reference_tag`?
+Do you remember `lvalue_reference_tag`? Now we can manipulate types just by `+/-` modifier flags, like this:
 
 ```cpp
 typetag<int> + lvalue_reference_tag == typetag<int&>    //true
@@ -179,5 +185,8 @@ void my_generic_func(T&& t)
 ### Type List
 TBD
 
+### Integral Constant
+
+##Conclusion
 Happy templating!
 
