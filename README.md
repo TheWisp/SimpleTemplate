@@ -2,11 +2,11 @@
 Simple Template is a single-header, small, MSVC / GCC / Clang compatible, C++14 template metaprogramming library. 
 
 * Type as consts: `typetag<int> == typetag<int>`
-* Type traits as functions: `typetag<int>.category() == integral_tag`
+* Type traits as constexpr functions: `typetag<int>.category() == integral_tag`
 * Type transformation as constexpr operations: 
 `typetag<int&> - lvalue_reference_tag + const_qualifier == typetag<const int>`
 * Extensible type computation as constexpr functions taking and returning type consts
-* Type branching as tag dispatching or type predicate specialization
+* Type branching as tag dispatching or tag specialization
 
 The development started as I needed more powerful metaprogramming tools than `<type_traits>` in various projects. Boost::MPL felt too old-style as of C++14 era, and I was reluctant to pull in Boost dependencies anyway. On the other hand, MSVC was not ready for Boost::Hana due to its known lack of supports to several key language features. This library was heavily inspired by Boost::Hana's type constant approach and techniques from other template libraries.
 
