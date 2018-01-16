@@ -2,6 +2,7 @@
 Simple Template is a single-header, small, MSVC / GCC / Clang compatible, C++14 template metaprogramming library. 
 
 * Type as consts: `typetag<int> == typetag<int>`
+* Type traits as functions: `typetag<int>.category() == integral_tag`
 * Type transformation as constexpr operations: 
 `typetag<int&> - lvalue_reference_tag + const_qualifier == typetag<const int>`
 * Extensible type computation as constexpr functions taking and returning type consts
@@ -62,7 +63,7 @@ static_assert(typetag<int>.size == 4_c, ""); //should be true most of the time :
 `TypeTag<T>::category()` is a constexpr function that returns one of these type category tags:
 
  | Type                        | Constant                        |
- | --------------------------- | ------------------------------- |
+ | :-------------------------- | :------------------------------ |
  | VoidTag                     | void_tag                        |
  | NullptrTag                  | nullptr_tag                     |
  | IntegralTag                 | integral_tag                    |
@@ -179,7 +180,7 @@ typetag<int&> - lvalue_reference_tag == typetag<int>    //true
 typetag<T> + const_qualifier + lvalue_reference_tag == typetag<const T&>    //true
 ```
 
-This may look redundant on the first sight, since one can refer to `const T&` when `T` is already in the context, but it will come in handy when the type itself is generic and compound, like in this case:
+This may look redundant at first, since one can refer to `const T&` when `T` is already in the context, but it will come in handy when the type itself is generic and compound, like in this case:
 
 ```cpp
 template<class T>
