@@ -195,6 +195,7 @@ void my_generic_func(T&& t)
 The library is under active development so API breaking changes can be expected.
 * Type list
 * More type traits
+* Compile time type names (compiler dependent magic!)
 * Documentation
 * C++17 support (template auto integral constants)
 
