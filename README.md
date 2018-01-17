@@ -1,7 +1,7 @@
 ## What's the Simple Template Library?
 Simple Template is a single-header, small, MSVC / GCC / Clang compatible, C++14 template metaprogramming library. 
 
-* Type as consts: `typetag<int> == typetag<int>`
+* Types as constants: `typetag<int> == typetag<int>`
 * Type traits as constexpr functions: `typetag<int>.category() == integral_tag`
 * Type transformation as constexpr operations: 
 `typetag<int&> - lvalue_reference_tag + const_qualifier == typetag<const int>`
@@ -190,6 +190,13 @@ void my_generic_func(T&& t)
     my_generic_impl(std::forward<T>(t), T_noref.category(), T_noref.size);
 }
 ```
+
+## Upcoming Changes
+The library is under active development so API breaking changes can be expected.
+* Type list
+* More type traits
+* Documentation
+* C++17 support (template auto integral constants)
 
 ## Conclusion
 Happy templating!
