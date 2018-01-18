@@ -51,6 +51,27 @@ typetag<T> == typetag<int>                                  //true if T is int
 typetag<const std::string&> == typetag<std::string>         //false
 ```
 
+### Type Transformation
+Now that we've converted types and their properties to tag values, type transformations can benefit from much better syntaxes with operators.
+Do you remember `lvalue_reference_tag`? Now we can manipulate types just by `+/-` modifier flags, like this:
+
+```cpp
+typetag<int> + lvalue_reference_tag == typetag<int&>    //true
+typetag<int&> - lvalue_reference_tag == typetag<int>    //true
+typetag<T> + const_qualifier + lvalue_reference_tag == typetag<const T&>    //true
+```
+
+This may look redundant at first, since one can refer to `const T&` when `T` is already in the context, but it will come in handy when the type itself is generic and compound, like in this case:
+
+```cpp
+template<class T>
+void my_generic_func(T&& t)
+{
+    constexpr auto T_noref = typetag<T> - reference_tag;
+    my_generic_impl(std::forward<T>(t), T_noref.category(), T_noref.size);
+}
+```
+
 ### Type Traits
 `TypeTag<T>::size` is a constexpr integral constant holding sizeof(T).
 
@@ -169,27 +190,6 @@ void generic(T t, U u) { return generic_impl(t, type_category(t), u, type_catego
 ```
 
 Such code would be very difficult and even ugly to write with SFINAE.
-
-### Type Transformation
-Now that we've converted types and their properties to tag values, type transformations can benefit from much better syntaxes with operators.
-Do you remember `lvalue_reference_tag`? Now we can manipulate types just by `+/-` modifier flags, like this:
-
-```cpp
-typetag<int> + lvalue_reference_tag == typetag<int&>    //true
-typetag<int&> - lvalue_reference_tag == typetag<int>    //true
-typetag<T> + const_qualifier + lvalue_reference_tag == typetag<const T&>    //true
-```
-
-This may look redundant at first, since one can refer to `const T&` when `T` is already in the context, but it will come in handy when the type itself is generic and compound, like in this case:
-
-```cpp
-template<class T>
-void my_generic_func(T&& t)
-{
-    constexpr auto T_noref = typetag<T> - reference_tag;
-    my_generic_impl(std::forward<T>(t), T_noref.category(), T_noref.size);
-}
-```
 
 ## Upcoming Changes
 The library is under active development so API breaking changes can be expected.
