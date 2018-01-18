@@ -53,7 +53,7 @@ typetag<const std::string&> == typetag<std::string>         //false
 
 ### Type Transformation
 Now that we've converted types and their properties to tag values, type transformations can benefit from much better syntaxes with operators.
-Do you remember `lvalue_reference_tag`? Now we can manipulate types just by `+/-` modifier flags, like this:
+We can manipulate types just by `+/-` modifier flags, like this:
 
 ```cpp
 typetag<int> + lvalue_reference_tag == typetag<int&>    //true
@@ -71,6 +71,15 @@ void my_generic_func(T&& t)
     my_generic_impl(std::forward<T>(t), T_noref.category(), T_noref.size);
 }
 ```
+
+All possible combinations are listed here: (still under development)
+ | Type                        | Constant                        |
+ | :-------------------------- | :------------------------------ |
+ | ReferenceTag                | reference_tag                   |
+ | LValueReferenceTag          | lvalue_reference_tag            |
+ | RValueReferenceTag          | rvalue_reference_tag            |
+ | ConstQualifierTag           | const_qualifier                 |
+ 
 
 ### Type Traits
 `TypeTag<T>::size` is a constexpr integral constant holding sizeof(T).
