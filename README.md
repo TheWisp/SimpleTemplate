@@ -73,13 +73,14 @@ void my_generic_func(T&& t)
 ```
 
 All possible combinations are listed here: (still under development)
+
  | Type                        | Constant                        |
  | :-------------------------- | :------------------------------ |
  | ReferenceTag                | reference_tag                   |
  | LValueReferenceTag          | lvalue_reference_tag            |
  | RValueReferenceTag          | rvalue_reference_tag            |
  | ConstQualifierTag           | const_qualifier                 |
- 
+
 
 ### Type Traits
 `TypeTag<T>::size` is a constexpr integral constant holding sizeof(T).
