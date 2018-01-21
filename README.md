@@ -113,7 +113,7 @@ static_assert(tag<int>.size() == 4_c, ""); //should be true most of the time :)
 ```cpp
 tag<int>.category() == integral_tag //true
 tag<void>.category() == void_tag //true
-tag<decltype(&C::f)> == pointer_to_member_function_tag     //true for member function f in class C
+tag<decltype(&C::f)>.category() == pointer_to_member_function_tag     //true for member function f in class C
 ```
 
 Alternatively, the library provides an equivalent free function `type_category`.
