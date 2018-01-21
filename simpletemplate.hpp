@@ -7,6 +7,13 @@
 namespace ST
 {
 	/*************************************************************************************************************/
+	/* Forward Declarations */
+	template<typename T, T value> struct IntegralConstant;
+	struct None;
+	template<typename T> struct Tag;
+	template<typename... Ts> struct List;
+
+	/*************************************************************************************************************/
 	/* Integral constants */
 
 	template<typename T, T Value>
@@ -57,6 +64,7 @@ namespace ST
 	/* Integral constant operators */
 
 	/* Comparison operators */
+
 	template<typename T1, typename T2, T1 value1, T2 value2>
 	constexpr BoolConstant<value1 == value2>
 		operator== (IntegralConstant<T1, value1>, IntegralConstant<T2, value2>) { return{}; }
@@ -164,11 +172,371 @@ namespace ST
 	constexpr IntegralConstant<decltype(value1 || value2), value1 || value2>
 		operator|| (IntegralConstant<T1, value1>, IntegralConstant<T2, value2>) { return {}; }
 
-	/*************************************************************************************************************/
-	/* Implementation */
+	// User-defined literal NUMBERLITERAL_c
+	template<char... Digits>
+	constexpr auto operator"" _c();
 
+	// User-defined literal NUMBERLITERAL_C
+	template<char... Digits>
+	constexpr auto operator"" _C();
+
+	/*************************************************************************************************************/
+
+#define POSSIBLE_RETURN(...) auto
+
+	/*************************************************************************************************************/
+	/* None tag */
+
+	struct None {};
+
+	constexpr None none = {};
+
+	template<typename T>
+	constexpr BoolConstantFalse operator==(None, T&&) { return {}; }
+
+	template<typename T>
+	constexpr BoolConstantFalse operator==(T&&, None) { return {}; }
+
+	constexpr BoolConstantTrue operator==(None, None) { return {}; }
+
+	template<typename T>
+	constexpr BoolConstantTrue operator!=(None, T&&) { return {}; }
+
+	template<typename T>
+	constexpr BoolConstantTrue operator!=(T&&, None) { return {}; }
+
+	constexpr BoolConstantFalse operator!=(None, None) { return {}; }
+
+	/*************************************************************************************************************/
+	/* Type Categories */
+
+	template<typename T>
+	struct TypeCategoryTagBase
+	{
+		constexpr BoolConstantTrue operator==(TypeCategoryTagBase<T>) { return {}; }
+		constexpr BoolConstantFalse operator!=(TypeCategoryTagBase<T>) { return {}; }
+
+		template<typename U>
+		constexpr BoolConstantFalse operator==(TypeCategoryTagBase<U>) { return {}; }
+
+		template<typename U>
+		constexpr BoolConstantTrue operator!=(TypeCategoryTagBase<U>) { return {}; }
+	};
+
+	struct VoidTag : TypeCategoryTagBase<VoidTag> {};
+	constexpr VoidTag void_tag = {};
+
+	struct NullptrTag : TypeCategoryTagBase<NullptrTag> {};
+	constexpr NullptrTag nullptr_tag = {};
+
+	struct IntegralTag : TypeCategoryTagBase<IntegralTag> {};
+	constexpr IntegralTag integral_tag = {};
+
+	struct FloatingPointTag : TypeCategoryTagBase<FloatingPointTag> {};
+	constexpr FloatingPointTag floating_point_tag = {};
+
+	struct ArrayTag : TypeCategoryTagBase<ArrayTag> {};
+	constexpr ArrayTag array_tag = {};
+
+	struct EnumTag : TypeCategoryTagBase<EnumTag> {};
+	constexpr EnumTag enum_tag = {};
+
+	struct UnionTag : TypeCategoryTagBase<UnionTag> {};
+	constexpr UnionTag union_tag = {};
+
+	struct ClassTag : TypeCategoryTagBase<ClassTag> {};
+	constexpr ClassTag class_tag = {};
+
+	struct FunctionTag : TypeCategoryTagBase<FunctionTag> {};
+	constexpr FunctionTag function_tag = {};
+
+	struct PointerTag : TypeCategoryTagBase<PointerTag> {};
+	constexpr PointerTag pointer_tag = {};
+
+	struct ReferenceTag : TypeCategoryTagBase<ReferenceTag> {};
+	constexpr ReferenceTag reference_tag = {};
+
+	struct LValueReferenceTag : ReferenceTag {};
+	constexpr LValueReferenceTag lvalue_reference_tag = {};
+
+	struct RValueReferenceTag : ReferenceTag {};
+	constexpr RValueReferenceTag rvalue_reference_tag = {};
+
+	struct PointerToMemberObjectTag : TypeCategoryTagBase<PointerToMemberObjectTag> {};
+	constexpr PointerToMemberObjectTag pointer_to_member_object_tag = {};
+
+	struct PointerToMemberFunctionTag : TypeCategoryTagBase<PointerToMemberFunctionTag> {};
+	constexpr PointerToMemberFunctionTag pointer_to_member_function_tag = {};
+
+	template<typename T>
+	constexpr auto type_category();
+
+	template<typename T>
+	using TypeCategory = decltype(type_category<T>());
+
+	/*************************************************************************************************************/
+	/* Type properties */
+	template<typename E>
+	constexpr POSSIBLE_RETURN(None, Tag<...>) enum_underlying_type();
+
+	template<typename T>
+	constexpr POSSIBLE_RETURN(None, Tag<...>) function_return_type();
+
+	template<typename T>
+	constexpr auto sizeof_type();
+
+	template<typename... Ts>
+	constexpr IntegralConstant<size_t, sizeof...(Ts)> countoftypes = {};
+
+	/*************************************************************************************************************/
+	/* type tag */
+
+	template<typename T>
+	struct Tag
+	{
+		using Type = T;
+
+		//generic traits
+		static constexpr POSSIBLE_RETURN(None, IntegralConstant<...>) size();
+		static constexpr
+			POSSIBLE_RETURN(VoidTag, NullptrTag, IntegralTag, FloatingPointTag, EnumTag,
+				UnionTag, ClassTag, FunctionTag, PointerTag, LValueReferenceTag,
+				RValueReferenceTag, PointerToMemberObjectTag, PointerToMemberFunctionTag)
+			category();
+
+		//enum traits
+		static constexpr POSSIBLE_RETURN(None, Tag<...>) underlying_type();
+
+		//function traits
+		static constexpr POSSIBLE_RETURN(None, Tag<...>) return_type();
+		//TODO static constexpr List<?> parameter_types()
+	};
+
+	// These are left undefined for preventing wrong usage: the type is already a type tag
+	template<typename T> struct Tag<Tag<T>>;
+	template<typename T> struct Tag<Tag<T>&>;
+	template<typename T> struct Tag<const Tag<T>>;
+	template<typename T> struct Tag<const Tag<T>&>;
+
+	template<typename T>
+	constexpr Tag<T> tag = {};
+
+#define TOTYPE(TAG) typename std::decay_t<decltype(TAG)>::Type
+
+	/*************************************************************************************************************/
+	/* partial type tag */
+
+	template<template<typename...> class PartialT>
+	struct PartialTag
+	{};
+
+	template<template<typename...> class PartialT>
+	constexpr PartialTag<PartialT> partialtypetag = {};
+
+	/*************************************************************************************************************/
+	/* Type equality comparison */
+
+	template<typename T>
+	constexpr BoolConstantTrue operator==(Tag<T>, Tag<T>) { return {}; }
+	template<typename T1, typename T2>
+	constexpr BoolConstantFalse operator==(Tag<T1>, Tag<T2>) { return {}; }
+	template<typename T>
+	constexpr BoolConstantFalse operator!=(Tag<T>, Tag<T>) { return {}; }
+	template<typename T1, typename T2>
+	constexpr BoolConstantTrue operator!=(Tag<T1>, Tag<T2>) { return {}; }
+
+	/*************************************************************************************************************/
+	/* type operators */
+
+	template<typename T>
+	constexpr Tag<T&> operator+ (Tag<T>, LValueReferenceTag) { return {}; }
+
+	template<typename T>
+	constexpr Tag<T&&> operator+ (Tag<T>, RValueReferenceTag) { return {}; }
+
+	template<typename T>
+	constexpr Tag<T> operator- (Tag<T>, ReferenceTag) { return {}; }
+	template<typename T>
+	constexpr Tag<T> operator- (Tag<T&>, ReferenceTag) { return {}; }
+	template<typename T>
+	constexpr Tag<T> operator- (Tag<T&>, LValueReferenceTag) { return {}; }
+	template<typename T>
+	constexpr Tag<T> operator- (Tag<T&>, RValueReferenceTag) = delete;
+	template<typename T>
+	constexpr Tag<T> operator- (Tag<T&&>, ReferenceTag) { return {}; }
+	template<typename T>
+	constexpr Tag<T> operator- (Tag<T&&>, LValueReferenceTag) = delete;
+	template<typename T>
+	constexpr Tag<T> operator- (Tag<T&&>, RValueReferenceTag) { return {}; }
+
+
+	constexpr struct ConstQualifierTag {} const_qualifier_tag = {};
+
+	template<typename T>
+	constexpr Tag<const T> operator+ (Tag<T>, ConstQualifierTag) { return {}; }
+
+	template<typename T>
+	constexpr Tag<const T&> operator+ (Tag<T&>, ConstQualifierTag) { return {}; }
+
+	template<typename T>
+	constexpr Tag<const T&&> operator+ (Tag<T&&>, ConstQualifierTag) { return {}; }
+
+	template<typename T>
+	constexpr Tag<T> operator- (Tag<T>, ConstQualifierTag) { return {}; }
+
+	template<typename T>
+	constexpr Tag<T> operator- (Tag<const T>, ConstQualifierTag) { return {}; }
+
+	template<typename T>
+	constexpr Tag<T&> operator- (Tag<const T&>, ConstQualifierTag) { return {}; }
+
+	template<typename T>
+	constexpr Tag<T&&> operator- (Tag<const T&&>, ConstQualifierTag) { return {}; }
+
+	template<typename T>
+	constexpr Tag<std::add_pointer_t<T>> operator+ (Tag<T>, PointerTag) { return{}; }
+
+	template<typename T>
+	constexpr Tag<std::remove_pointer_t<T>> operator- (Tag<T>, PointerTag) { return{}; }
+
+	/*************************************************************************************************************/
+	/* Misc */
+
+	template<typename T, typename ... ArgsT>
+	inline auto create(Tag<T>, ArgsT&& ... args)
+	{
+		return T{ std::forward<ArgsT>(args)... };
+	}
+
+	/*************************************************************************************************************/
+	/* Type list */
+	template<int N, typename... Ts> using NthTypeOf =
+		typename std::tuple_element<N, std::tuple<Ts...>>::type;
+
+	template<typename... Ts>
+	struct List
+	{
+		static constexpr IntegralConstant<size_t, sizeof...(Ts)> length = {};
+
+		template<typename T, T N>
+		constexpr auto operator[] (IntegralConstant<T, N>) const
+		{
+			return tag<NthTypeOf<N, Ts...>>;
+		}
+	};
+
+	template<typename ... Ts>
+	constexpr List<Ts...> list = {};
+
+	template<typename ... Ts, typename T>
+	constexpr auto operator+(Tag<T>, List<Ts...>)
+	{
+		return list<T, Ts...>;
+	}
+
+	template<typename... Types1, typename... Types2>
+	constexpr auto operator+(List<Types1...>, List<Types2...>)
+	{
+		return list<Types1..., Types2...>;
+	}
+
+	template<typename T, typename... Tails>
+	constexpr auto operator-(List<T, Tails...>, Tag<T>)
+	{
+		return list<Tails...>;
+	}
+
+	template<typename Head, typename... Tails, typename T>
+	constexpr auto operator-(List<Head, Tails...>, Tag<T>)
+	{
+		return tag<Head> +(list<Tails...> -tag<T>);
+	}
+
+	template<typename T>
+	constexpr auto operator-(List<>, Tag<T>)
+	{
+		return list<>;
+	}
+
+	//helper functions
+
+	template<typename Head, typename... Tails>
+	constexpr auto list_first_or_default(List<Head, Tails...>)
+	{
+		return tag<Head>;
+	}
+
+	constexpr auto list_first_or_default(List<>) { return none; }
+
+	template<typename Head, typename... Tails>
+	constexpr auto list_without_first(List<Head, Tails...>)
+	{
+		return list<Tails...>;
+	}
+
+	constexpr auto list_without_first(List<> l) { return l; }
+
+	template<typename... Ts, typename T>
+	constexpr auto operator+(List<Ts...>, Tag<T>)
+	{
+		return list<Ts..., T>;
+	}
+
+	template<typename... Types1, typename... Types2>
+	constexpr auto operator==(List<Types1...> l1, List<Types2...> l2)
+	{
+		//can be further simplified with constexpr if
+		return
+			countoftypes<Types1...> == countoftypes<Types2...> &&
+			list_first_or_default(l1) == list_first_or_default(l2) &&
+			list_without_first(l1) == list_without_first(l2);
+	}
+
+	constexpr BoolConstantTrue operator==(List<>, List<>) { return true_c; }
+
+	template<typename... Types1, typename... Types2>
+	constexpr auto operator!=(List<Types1...> l1, List<Types2...> l2)
+	{
+		return !(l1 == l2);
+	}
+
+	template<typename... Ts>
+	constexpr auto reverse(List<Ts...> list)
+	{
+		return reverse(list_without_first(list)) + list_first_or_default(list);
+	}
+
+	constexpr auto reverse(List<> list) { return list; }
+
+	//TODO filter: use enum flag / property tags for common cases
+
+	/*************************************************************************************************************/
+	/* Branching */
+	template<typename T1, typename T2>
+	constexpr auto select(BoolConstantTrue, T1 t1, T2) { return t1; }
+
+	template<typename T1, typename T2>
+	constexpr auto select(BoolConstantFalse, T1, T2 t2) { return t2; }
+
+	/*************************************************************************************************************/
+	/* Type unpacking */
+
+	template<template<typename...> class PartialT, typename... Ts>
+	constexpr Tag<PartialT<Ts...>> combine(PartialTag<PartialT>, List<Ts...>) { return {}; }
+
+	template<template<typename...> class PartialT, typename... Ts>
+	constexpr Tag<PartialT<Ts...>> combine(PartialTag<PartialT>, Tag<Ts>...) { return {}; }
+
+#undef POSSIBLE_RETURN
+
+	/*************************************************************************************************************/
+	/* IMPLEMENTATION */
+	/*************************************************************************************************************/
 	namespace Details
 	{
+
+		/** Integral constant **/
+
 		constexpr char dec_to_value(char c)
 		{
 			switch (c)
@@ -340,25 +708,25 @@ namespace ST
 		template<long long N>
 		struct minimal_integral_type<N, std::enable_if_t<in_numeric_limits<std::int8_t>(N)>>
 		{
-			using type = std::int8_t;
+			using Type = std::int8_t;
 		};
 
 		template<long long N>
 		struct minimal_integral_type<N, std::enable_if_t<!in_numeric_limits<std::int8_t>(N) && in_numeric_limits<std::int16_t>(N)>>
 		{
-			using type = std::int16_t;
+			using Type = std::int16_t;
 		};
 
 		template<long long N>
 		struct minimal_integral_type<N, std::enable_if_t<!in_numeric_limits<std::int16_t>(N) && in_numeric_limits<std::int32_t>(N)>>
 		{
-			using type = std::int32_t;
+			using Type = std::int32_t;
 		};
 
 		template<long long N>
 		struct minimal_integral_type<N, std::enable_if_t<!in_numeric_limits<std::int32_t>(N)>>
 		{
-			using type = std::int64_t;
+			using Type = std::int64_t;
 		};
 
 		struct tag_hex {};
@@ -437,226 +805,38 @@ namespace ST
 		{
 			using base_tag = typename digit_base_parser<Digits...>::tag;
 			constexpr auto parse_result = parse_impl<Digits...>(base_tag{});
-			using min_type = typename minimal_integral_type<parse_result>::type;
+			using min_type = typename minimal_integral_type<parse_result>::Type;
 			return IntegralConstant<min_type, parse_result>{};
 		}
 
-	} // namespace Details
+		/** Integral constant **/
 
-	template<char... Digits>
-	constexpr auto operator"" _c()
-	{
-		return Details::parse<Digits...>();
-	}
+		/** Primitive integral constant support **/
 
-	template<char... Digits>
-	constexpr auto operator"" _C()
-	{
-		return operator""_c<Digits...>();
-	}
+		template<typename T>
+		struct SizeOfTypeImpl
+		{
+			static constexpr auto size = IntegralConstant<size_t, sizeof(T)>{};
+		};
 
-	/*************************************************************************************************************/
-	/* Base types */
+		template<typename T>
+		struct SizeOfTypeImpl<T[]>
+		{
+			static constexpr auto size = none;
+		};
 
-	template<typename... Ts> struct TypeTagList;
+		template<>
+		struct SizeOfTypeImpl<void>
+		{
+			static constexpr auto size = none;
+		};
 
-	template<typename T, T value>//TODO can fwd decl be simplified?
-	struct IntegralConstant;
+		/** Primitive integral constant support **/
 
-	template<typename T>
-	struct TypeTag
-	{
-		using type = T;
-		static constexpr IntegralConstant<size_t, sizeof(T)> size = {};
-		static constexpr auto category();
-	};
+		/** Type categories **/
 
-	// These are left undefined for preventing wrong usage: the type is already a type tag
-	template<typename T> struct TypeTag<TypeTag<T>>;
-	template<typename T> struct TypeTag<TypeTag<T>&>;
-	template<typename T> struct TypeTag<const TypeTag<T>>;
-	template<typename T> struct TypeTag<const TypeTag<T>&>;
-
-	//#hack: void cannot have sizeof
-	template<> struct TypeTag<void>
-	{
-		using type = void;
-		static constexpr auto category();
-	};
-
-	//#hack: T[] cannot have sizeof
-	template<typename T> struct TypeTag<T[]>
-	{
-		using type = T[];
-		static constexpr auto category();
-	};
-
-	template<typename R, typename... A> struct TypeTag<R(A...)>
-	{
-		using type = R(A...);
-		static constexpr auto category();
-	};
-
-	template<template<typename...> class PartialT>
-	struct PartialTypeTag
-	{};
-
-	template<typename T>
-	constexpr TypeTag<T> typetag = {};
-
-	//challenge: how to unify with 'typetag', template<auto>?
-	template<template<typename...> class PartialT>
-	constexpr PartialTypeTag<PartialT> partialtypetag = {};
-
-	// The nonexistent type: no inner type and size are defined. The type tag can only be used in comparisons.
-	// An attempt to access its other traits are considered a programming error.
-	template<> struct TypeTag<struct __NonSuch>
-	{
-	};
-
-	using NonSuch = TypeTag<struct __NonSuch>;
-	constexpr NonSuch nonsuch = {};
-
-	template<typename T>
-	constexpr bool blackbox_false = false;
-
-	template<typename T>
-	T _to_type_impl(TypeTag<T>);//no definition
-
-	template<typename T>
-	constexpr auto _to_type_impl(T) { static_assert(blackbox_false<T>, "TOTYPE requires TypeTag type"); }
-
-	/*************************************************************************************************************/
-	/* Integral constant support for built-in operators */
-	template<typename T>
-	constexpr IntegralConstant<size_t, sizeof(T)> sizeoftype = {};
-	template<typename T>
-	constexpr IntegralConstant<size_t, alignof(T)> alignoftag(TypeTag<T>) { return {}; }//TODO remove in favor TypeTag::align?
-	template<typename T>
-	constexpr IntegralConstant<size_t, alignof(T)> alignoftype = {};
-	template<typename... Ts>
-	constexpr IntegralConstant<size_t, sizeof...(Ts)> countoftypes = {};
-
-	/*************************************************************************************************************/
-	/* Type equality comparison */
-
-	template<typename T>
-	constexpr BoolConstantTrue operator==(TypeTag<T>, TypeTag<T>) { return {}; }
-	template<typename T1, typename T2>
-	constexpr BoolConstantFalse operator==(TypeTag<T1>, TypeTag<T2>) { return {}; }
-	template<typename T>
-	constexpr BoolConstantFalse operator!=(TypeTag<T>, TypeTag<T>) { return {}; }
-	template<typename T1, typename T2>
-	constexpr BoolConstantTrue operator!=(TypeTag<T1>, TypeTag<T2>) { return {}; }
-
-
-	/*************************************************************************************************************/
-	/* Type properties */
-
-	template<typename T>
-	constexpr BoolConstant<std::is_integral<T>::value> is_integral(TypeTag<T>) { return {}; }
-
-	template<typename T>
-	constexpr BoolConstant<std::is_enum<T>::value> is_enum(TypeTag<T>) { return {}; }
-
-	template<typename T>
-	constexpr BoolConstant<std::is_class<T>::value> is_class(TypeTag<T>) { return {}; }
-
-	template<typename T, size_t N>
-	constexpr BoolConstantTrue is_array(TypeTag<T[N]>) { return {}; }
-
-	template<typename T>
-	constexpr BoolConstantTrue is_array(TypeTag<T[]>) { return {}; }
-
-	template<typename T>
-	constexpr BoolConstantFalse is_array(TypeTag<T>) { return {}; }
-
-	template<typename T>
-	constexpr BoolConstantFalse is_const(TypeTag<T>) { return {}; }
-	template<typename T>
-	constexpr BoolConstantTrue is_const(TypeTag<const T>) { return {}; }
-	template<typename T>
-	constexpr BoolConstantTrue is_const(TypeTag<const T&>) { return {}; }
-	template<typename T>
-	constexpr BoolConstantTrue is_const(TypeTag<const T&&>) { return {}; }
-
-	template<typename T>
-	constexpr BoolConstantFalse is_reference(TypeTag<T>) { return {}; }
-	template<typename T>
-	constexpr BoolConstantTrue is_reference(TypeTag<T&>) { return {}; }
-	template<typename T>
-	constexpr BoolConstantTrue is_reference(TypeTag<T&&>) { return {}; }
-
-	template<typename T>
-	constexpr auto is_reference_type = is_reference(typetag<T>);
-
-	template<typename T>
-	constexpr BoolConstant<std::is_default_constructible<T>::value> is_default_constructible(TypeTag<T>) { return {}; }
-
-
-	/*************************************************************************************************************/
-	/* type categories */
-
-	template<typename T>
-	struct TypeCategoryTagBase
-	{
-		constexpr BoolConstantTrue operator==(TypeCategoryTagBase<T>) { return {}; }
-		constexpr BoolConstantFalse operator!=(TypeCategoryTagBase<T>) { return {}; }
-
-		template<typename U>
-		constexpr BoolConstantFalse operator==(TypeCategoryTagBase<U>) { return {}; }
-
-		template<typename U>
-		constexpr BoolConstantTrue operator!=(TypeCategoryTagBase<U>) { return {}; }
-	};
-
-	struct VoidTag : TypeCategoryTagBase<VoidTag> {};
-	constexpr VoidTag void_tag = {};
-
-	struct NullptrTag : TypeCategoryTagBase<NullptrTag> {};
-	constexpr NullptrTag nullptr_tag = {};
-
-	struct IntegralTag : TypeCategoryTagBase<IntegralTag> {};
-	constexpr IntegralTag integral_tag = {};
-
-	struct FloatingPointTag : TypeCategoryTagBase<FloatingPointTag> {};
-	constexpr FloatingPointTag floating_point_tag = {};
-
-	struct ArrayTag : TypeCategoryTagBase<ArrayTag> {};
-	constexpr ArrayTag array_tag = {};
-
-	struct EnumTag : TypeCategoryTagBase<EnumTag> {};
-	constexpr EnumTag enum_tag = {};
-
-	struct UnionTag : TypeCategoryTagBase<UnionTag> {};
-	constexpr UnionTag union_tag = {};
-
-	struct ClassTag : TypeCategoryTagBase<ClassTag> {};
-	constexpr ClassTag class_tag = {};
-
-	struct FunctionTag : TypeCategoryTagBase<FunctionTag> {};
-	constexpr FunctionTag function_tag = {};
-
-	struct PointerTag : TypeCategoryTagBase<PointerTag> {};
-	constexpr PointerTag pointer_tag = {};
-
-	struct ReferenceTag : TypeCategoryTagBase<ReferenceTag> {};
-	constexpr ReferenceTag reference_tag = {};
-
-	struct LValueReferenceTag : ReferenceTag {}; 
-	constexpr LValueReferenceTag lvalue_reference_tag = {};
-
-	struct RValueReferenceTag : ReferenceTag {}; 
-	constexpr RValueReferenceTag rvalue_reference_tag = {};
-
-	struct PointerToMemberObjectTag : TypeCategoryTagBase<PointerToMemberObjectTag>{};
-	constexpr PointerToMemberObjectTag pointer_to_member_object_tag = {};
-
-	struct PointerToMemberFunctionTag : TypeCategoryTagBase<PointerToMemberFunctionTag> {};
-	constexpr PointerToMemberFunctionTag pointer_to_member_function_tag = {};
-
-	template<typename T, typename = void>
-	struct TypeCategoryImpl;
+		template<typename T, typename = void>
+		struct TypeCategoryImpl;
 
 #define _ST_SPECIALIZE_TAG(T, TAG)		\
 	template<>							\
@@ -671,334 +851,203 @@ namespace ST
 	_ST_SPECIALIZE_TAG(volatile T, TAG);         \
 	_ST_SPECIALIZE_TAG(const volatile T, TAG);
 
-	//void type
-	_ST_SPECIALIZE_TAG_CV(void, VoidTag);
-	//nullptr type
-	_ST_SPECIALIZE_TAG_CV(std::nullptr_t, NullptrTag);
+		//void type
+		_ST_SPECIALIZE_TAG_CV(void, VoidTag);
+		//nullptr type
+		_ST_SPECIALIZE_TAG_CV(std::nullptr_t, NullptrTag);
 
 #define _ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(T)			 \
 	_ST_SPECIALIZE_TAG_CV(T, IntegralTag);               \
 	_ST_SPECIALIZE_TAG_CV(unsigned T, IntegralTag);
 
-	//Integral types
-	_ST_SPECIALIZE_TAG_CV(bool, IntegralTag);
-	_ST_SPECIALIZE_TAG_CV(char16_t, IntegralTag);
-	_ST_SPECIALIZE_TAG_CV(char32_t, IntegralTag);
-	_ST_SPECIALIZE_TAG_CV(wchar_t, IntegralTag);
-	_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(char);
-	_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(short);
-	_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(int);
-	_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(long);
-	_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(long long);
+		//Integral types
+		_ST_SPECIALIZE_TAG_CV(bool, IntegralTag);
+		_ST_SPECIALIZE_TAG_CV(char16_t, IntegralTag);
+		_ST_SPECIALIZE_TAG_CV(char32_t, IntegralTag);
+		_ST_SPECIALIZE_TAG_CV(wchar_t, IntegralTag);
+		_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(char);
+		_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(short);
+		_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(int);
+		_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(long);
+		_ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN(long long);
 
-	//Floating point types
-	_ST_SPECIALIZE_TAG_CV(float, FloatingPointTag);
-	_ST_SPECIALIZE_TAG_CV(double, FloatingPointTag);
-	_ST_SPECIALIZE_TAG_CV(long double, FloatingPointTag);
+		//Floating point types
+		_ST_SPECIALIZE_TAG_CV(float, FloatingPointTag);
+		_ST_SPECIALIZE_TAG_CV(double, FloatingPointTag);
+		_ST_SPECIALIZE_TAG_CV(long double, FloatingPointTag);
 
-	//Array types
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_array<T>::value>>
-	{
-		using Category = ArrayTag;
-	};
+		//Array types
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_array<T>::value>>
+		{
+			using Category = ArrayTag;
+		};
 
-	//Enum types
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_enum<T>::value>>
-	{
-		using Category = EnumTag;
-	};
+		//Enum types
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_enum<T>::value>>
+		{
+			using Category = EnumTag;
+		};
 
-	//Union types
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_union<T>::value>>
-	{
-		using Category = UnionTag;
-	};
+		//Union types
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_union<T>::value>>
+		{
+			using Category = UnionTag;
+		};
 
-	//Class types
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_class<T>::value>>
-	{
-		using Category = ClassTag;
-	};
+		//Class types
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_class<T>::value>>
+		{
+			using Category = ClassTag;
+		};
 
-	//Function types
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_function<T>::value>>
-	{
-		using Category = FunctionTag;
-	};
+		//Function types
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_function<T>::value>>
+		{
+			using Category = FunctionTag;
+		};
 
-	//Pointer types
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_pointer<T>::value>>
-	{
-		using Category = PointerTag;
-	};
+		//Pointer types
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_pointer<T>::value>>
+		{
+			using Category = PointerTag;
+		};
 
-	//Reference types
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_lvalue_reference<T>::value>>
-	{
-		using Category = LValueReferenceTag; //convertible to ReferenceTag
-	};
+		//Reference types
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_lvalue_reference<T>::value>>
+		{
+			using Category = LValueReferenceTag; //convertible to ReferenceTag
+		};
 
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_rvalue_reference<T>::value>>
-	{
-		using Category = RValueReferenceTag; //convertible to ReferenceTag
-	};
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_rvalue_reference<T>::value>>
+		{
+			using Category = RValueReferenceTag; //convertible to ReferenceTag
+		};
 
-	//Pointer to member types
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_member_object_pointer<T>::value>>
-	{
-		using Category = PointerToMemberObjectTag;
-	};
+		//Pointer to member types
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_member_object_pointer<T>::value>>
+		{
+			using Category = PointerToMemberObjectTag;
+		};
 
-	template<typename T>
-	struct TypeCategoryImpl<T, std::enable_if_t<std::is_member_function_pointer<T>::value>>
-	{
-		using Category = PointerToMemberFunctionTag;
-	};
+		template<typename T>
+		struct TypeCategoryImpl<T, std::enable_if_t<std::is_member_function_pointer<T>::value>>
+		{
+			using Category = PointerToMemberFunctionTag;
+		};
 
 #undef _ST_SPECIALIZE_TAG
 #undef _ST_SPECIALIZE_TAG_CV
 #undef _ST_SPECIALIZE_INTEGRAL_TAG_CV_SIGN
+		/** Type categories **/
 
-	template<typename T>
-	using TypeCategory = typename TypeCategoryImpl<T>::Category;
+		/** Enum traits **/
 
-	template<typename T>
-	constexpr auto type_category(TypeTag<T> = {})
-	{
-		return TypeCategory<T>{};
-	}
-
-	template<typename T>
-	constexpr auto type_category(T&&)
-	{
-		return TypeCategory<T>{};
-	}
-
-	template<typename T>
-	constexpr auto TypeTag<T>::category()
-	{
-		return TypeCategory<T>{};
-	}
-
-	/*************************************************************************************************************/
-	/* type transformations */
-
-	template<typename T>
-	constexpr auto/*Must be auto deduced to avoid error*/
-		underlying_type_impl(TypeTag<T>, BoolConstantTrue)
-	{
-		return typetag<std::underlying_type_t<T>>;
-	}
-
-	template<typename T>
-	constexpr NonSuch underlying_type_impl(TypeTag<T>, BoolConstantFalse)
-	{
-		return nonsuch;
-	}
-
-	template<typename T>
-	constexpr auto underlying_type(TypeTag<T>)
-	{
-		return underlying_type_impl(typetag<T>, is_enum(typetag<T>));
-	}
-
-	/*************************************************************************************************************/
-	/* type operators */
-
-	template<typename T>
-	constexpr TypeTag<T&> operator+ (TypeTag<T>, LValueReferenceTag) { return typetag<T&>; }
-
-	template<typename T>
-	constexpr TypeTag<T&&> operator+ (TypeTag<T>, RValueReferenceTag) { return typetag<T&&>; }
-
-	template<typename T>
-	constexpr TypeTag<T> operator- (TypeTag<T>, ReferenceTag) { return typetag<T>; }
-
-	template<typename T>
-	constexpr TypeTag<T> operator- (TypeTag<T&>, ReferenceTag) { return typetag<T>; }
-
-	template<typename T>
-	constexpr TypeTag<T> operator- (TypeTag<T&&>, ReferenceTag) { return typetag<T>; }
-
-	constexpr struct ConstQualifierTag {} const_qualifier = {};
-
-	template<typename T>
-	constexpr TypeTag<const T> operator+ (TypeTag<T>, ConstQualifierTag) { return typetag<const T>; }
-
-	template<typename T>
-	constexpr TypeTag<const T&> operator+ (TypeTag<T&>, ConstQualifierTag) { return typetag<const T&>; }
-
-	template<typename T>
-	constexpr TypeTag<const T&&> operator+ (TypeTag<T&&>, ConstQualifierTag) { return typetag<const T&&>; }
-
-	template<typename T>
-	constexpr TypeTag<T> operator- (TypeTag<T>, ConstQualifierTag) { return typetag<T>; }
-
-	template<typename T>
-	constexpr TypeTag<T> operator- (TypeTag<const T>, ConstQualifierTag) { return typetag<T>; }
-
-	template<typename T>
-	constexpr TypeTag<T&> operator- (TypeTag<const T&>, ConstQualifierTag) { return typetag<T&>; }
-
-	template<typename T>
-	constexpr TypeTag<T&&> operator- (TypeTag<const T&&>, ConstQualifierTag) { return typetag<T&&>; }
-
-	/*************************************************************************************************************/
-	/* Misc */
-
-	template<typename T, typename ... ArgsT>
-	inline auto create(TypeTag<T>, ArgsT&& ... args)
-	{
-		return T{ std::forward<ArgsT>(args)... };
-	}
-
-	// Type properties function taking expressions
-
-	template<typename T>
-	constexpr auto is_enum(T&&)
-	{
-		return is_enum(typetag<T> -reference_tag - const_qualifier);
-	}
-
-	template<typename T>
-	constexpr auto underlying_type(T&&)
-	{
-		return underlying_type(typetag<T> -reference_tag - const_qualifier);
-	}
-
-	/*************************************************************************************************************/
-	/* Type list */
-	template<int N, typename... Ts> using NthTypeOf =
-		typename std::tuple_element<N, std::tuple<Ts...>>::type;
-
-	//TODO evaluate name 'TypeTagSequence' and 'TypeSequence'
-	template<typename... Ts>
-	struct TypeTagList
-	{
-		static constexpr IntegralConstant<size_t, sizeof...(Ts)> length = {};
-
-		template<typename T, T N>
-		constexpr auto operator[] (IntegralConstant<T, N>) const
+		template<typename E, typename = TypeCategory<E>>
+		struct UnderlyingTypeImpl
 		{
-			return typetag<NthTypeOf<N, Ts...>>;
-		}
+			static constexpr auto tag = none;
+		};
 
-		//TODO: has(TypeTag<T>)
+		template<typename E>
+		struct UnderlyingTypeImpl<E, EnumTag>
+		{
+			static constexpr auto tag = ST::tag<std::underlying_type_t<E>>;
+		};
 
-	};
+		/** Enum traits **/
 
-	template<typename ... Ts>
-	constexpr TypeTagList<Ts...> typetaglist = {};
+		/** Function traits **/
 
-	template<typename ... Ts, typename T>
-	constexpr auto operator+(TypeTag<T>, TypeTagList<Ts...>)
+		template<typename T> struct FunctionTypeImpl;
+		template<typename R, typename ... A> struct FunctionTypeImpl<R(A...)>
+		{
+			static constexpr auto return_type = tag<R>;
+		};
+
+		/** Function traits **/
+
+
+	} // namespace Details
+
+	/** Integral Constants **/
+
+	template<char... Digits>
+	constexpr auto operator"" _c()
 	{
-		return typetaglist<T, Ts...>;
+		return Details::parse<Digits...>();
 	}
 
-	template<typename... Types1, typename... Types2>
-	constexpr auto operator+(TypeTagList<Types1...>, TypeTagList<Types2...>)
+	// User-defined literal NUMBERLITERAL_C
+	template<char... Digits>
+	constexpr auto operator"" _C()
 	{
-		return typetaglist<Types1..., Types2...>;
+		return operator""_c<Digits...>();
 	}
 
-	template<typename T, typename... Tails>
-	constexpr auto operator-(TypeTagList<T, Tails...>, TypeTag<T>)
-	{
-		return typetaglist<Tails...>;
-	}
+	/** Integral Constants **/
 
-	template<typename Head, typename... Tails, typename T>
-	constexpr auto operator-(TypeTagList<Head, Tails...>, TypeTag<T>)
+	/** Free functions **/
+
+	template<typename T>
+	constexpr auto sizeof_type()
 	{
-		return typetag<Head> +(typetaglist<Tails...> -typetag<T>);
+		return Details::SizeOfTypeImpl<T>::size;
 	}
 
 	template<typename T>
-	constexpr auto operator-(TypeTagList<>, TypeTag<T>)
+	constexpr auto type_category()
 	{
-		return typetaglist<>;
+		return typename Details::TypeCategoryImpl<T>::Category{};
 	}
 
-	//helper functions
-
-	template<typename Head, typename... Tails>
-	constexpr auto list_first_or_default(TypeTagList<Head, Tails...>)
+	template<typename E>
+	constexpr auto enum_underlying_type()
 	{
-		return typetag<Head>;
+		return Details::UnderlyingTypeImpl<E>::tag;
 	}
 
-	constexpr auto list_first_or_default(TypeTagList<>) { return nonsuch; }
-
-	template<typename Head, typename... Tails>
-	constexpr auto list_without_first(TypeTagList<Head, Tails...>)
+	template<typename T>
+	constexpr auto function_return_type()
 	{
-		return typetaglist<Tails...>;
+		return Details::FunctionTypeImpl<T>::return_type;
 	}
 
-	constexpr auto list_without_first(TypeTagList<> l) { return l; }
+	/** Free functions **/
 
-	template<typename... Ts, typename T>
-	constexpr auto operator+(TypeTagList<Ts...>, TypeTag<T>)
+	/** struct Tag **/
+
+	template<typename T> constexpr auto Tag<T>::size()
 	{
-		return typetaglist<Ts..., T>;
+		return sizeof_type<T>();
 	}
 
-	template<typename... Types1, typename... Types2>
-	constexpr auto operator==(TypeTagList<Types1...> l1, TypeTagList<Types2...> l2)
+	template<typename T> constexpr auto Tag<T>::category()
 	{
-		//can be further simplified with constexpr if
-		return
-			countoftypes<Types1...> == countoftypes<Types2...> &&
-			list_first_or_default(l1) == list_first_or_default(l2) &&
-			list_without_first(l1) == list_without_first(l2);
+		return type_category<Type>();
 	}
 
-	constexpr BoolConstantTrue operator==(TypeTagList<>, TypeTagList<>) { return true_c; }
-
-	template<typename... Types1, typename... Types2>
-	constexpr auto operator!=(TypeTagList<Types1...> l1, TypeTagList<Types2...> l2)
+	template<typename T> constexpr auto Tag<T>::underlying_type()
 	{
-		return !(l1 == l2);
+		return enum_underlying_type<T>();
 	}
 
-	template<typename... Ts>
-	constexpr auto reverse(TypeTagList<Ts...> list)
+	template<typename T> constexpr auto Tag<T>::return_type()
 	{
-		return reverse(list_without_first(list)) + list_first_or_default(list);
+		return function_return_type<T>();
 	}
 
-	constexpr auto reverse(TypeTagList<> list) { return list; }
+	/** struct Tag **/
 
-
-	//TODO filter: use enum flag / property tags for common cases
-
+	/* END OF IMPLEMENTATION */
 	/*************************************************************************************************************/
-	/* Branching */
-	template<typename T1, typename T2>
-	constexpr decltype(auto) select(BoolConstantTrue, T1 t1, T2) { return t1; }
-
-	template<typename T1, typename T2>
-	constexpr decltype(auto) select(BoolConstantFalse, T1, T2 t2) { return t2; }
-
-	/*************************************************************************************************************/
-	/* Type unpacking */
-
-	template<template<typename...> class PartialT, typename... Ts>
-	constexpr TypeTag<PartialT<Ts...>> combine(PartialTypeTag<PartialT>, TypeTagList<Ts...>) { return {}; }
-
-	template<template<typename...> class PartialT, typename... Ts>
-	constexpr TypeTag<PartialT<Ts...>> combine(PartialTypeTag<PartialT>, TypeTag<Ts>...) { return {}; }
 
 } // namespace ST
-
-#define TOTYPE(TYPETAG) decltype(ST::_to_type_impl(TYPETAG))
