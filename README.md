@@ -1,6 +1,9 @@
 ## What's the Simple Template Library?
 Simple Template is a single-header, small, MSVC / GCC / Clang compatible, C++14 template metaprogramming library. 
 
+The development started as I needed more powerful metaprogramming tools than `<type_traits>` in various projects. Boost::MPL felt too old-style as of C++14 era, and I was reluctant to pull in Boost dependencies anyway. On the other hand, MSVC was not ready for Boost::Hana due to its known lack of supports to several key language features. This library was heavily inspired by Boost::Hana's type constant approach and techniques from other template libraries.
+
+## Motivation
 * Types as constants: `tag<int> == tag<int>`
 * Type traits as constexpr functions: `tag<int>.category() == integral_tag`
 * Type transformation as constexpr operations: 
@@ -8,9 +11,6 @@ Simple Template is a single-header, small, MSVC / GCC / Clang compatible, C++14 
 * Extensible type computation as constexpr functions taking and returning type consts
 * Type branching as tag dispatching or tag specialization
 
-The development started as I needed more powerful metaprogramming tools than `<type_traits>` in various projects. Boost::MPL felt too old-style as of C++14 era, and I was reluctant to pull in Boost dependencies anyway. On the other hand, MSVC was not ready for Boost::Hana due to its known lack of supports to several key language features. This library was heavily inspired by Boost::Hana's type constant approach and techniques from other template libraries.
-
-## Motivation
 The library provides easy to use wrappers and functions for two main use cases in template metaprogramming: type transformation and type branching. Fundamentally, every type-related action in generic programming falls into one of the two categories. Type transformations usually involve trait classes and nested types, and branching or dispatching mainly use template specialization, overloading and SFINAE. Writing generic code using these techniques are difficult and tedious work. Simple Template aims to improve these common use cases by providing cleaner and more natural syntax based on C++14 template consts.
 
 ## Supported Compilers
