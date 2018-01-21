@@ -30,7 +30,7 @@ using ST::operator""_c; //in your namespace
 ```
 
 ## Tutorial
-`tag<T>` and `tag<T>` are the basic building blocks here. For better distinction, TitleCase symbols here represent types and snake_cases represent values, which can be variables, consts or functions. `Tag<T>` is a wrapper type that contains type predicates and trait functions for `T`, and `tag<T>` is the only constexpr instance of the wrapper, that can be used as a value, passed around, or forcing template argument deduction.
+`Tag<T>` and `tag<T>` are the basic building blocks here. For better distinction, TitleCase symbols here represent types and snake_cases represent values, which can be variables, consts or functions. `Tag<T>` is a wrapper type that contains type predicates and trait functions for `T`, and `tag<T>` is the only constexpr instance of the wrapper, that can be used as a value, passed around, or forcing template argument deduction.
 
 ### Getting the Inner Type
 From `Tag<T>`, use `Tag<T>::type` for the actual wrapped type. From an instance of `tag<T>` which can be an alias without mentioning `T`, use `decltype(tag)::type`, this is useful when the type tag itself is the result of a more complex type deduction:
