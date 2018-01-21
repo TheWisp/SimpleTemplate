@@ -1,16 +1,16 @@
 ## What's the Simple Template Library?
 Simple Template is a single-header, small, MSVC / GCC / Clang compatible, C++14 template metaprogramming library. 
 
-* Types as constants: `typetag<int> == typetag<int>`
-* Type traits as constexpr functions: `typetag<int>.category() == integral_tag`
+* Types as constants: `tag<int> == tag<int>`
+* Type traits as constexpr functions: `tag<int>.category() == integral_tag`
 * Type transformation as constexpr operations: 
-`typetag<int&> - lvalue_reference_tag + const_qualifier == typetag<const int>`
+`tag<int&> - lvalue_reference_tag + const_qualifier_tag == tag<const int>`
 * Extensible type computation as constexpr functions taking and returning type consts
 * Type branching as tag dispatching or tag specialization
 
 The development started as I needed more powerful metaprogramming tools than `<type_traits>` in various projects. Boost::MPL felt too old-style as of C++14 era, and I was reluctant to pull in Boost dependencies anyway. On the other hand, MSVC was not ready for Boost::Hana due to its known lack of supports to several key language features. This library was heavily inspired by Boost::Hana's type constant approach and techniques from other template libraries.
 
-## What to Expect
+## Motivation
 The library provides easy to use wrappers and functions for two main use cases in template metaprogramming: type transformation and type branching. Fundamentally, every type-related action in generic programming falls into one of the two categories. Type transformations usually involve trait classes and nested types, and branching or dispatching mainly use template specialization, overloading and SFINAE. Writing generic code using these techniques are difficult and tedious work. Simple Template aims to improve these common use cases by providing cleaner and more natural syntax based on C++14 template consts.
 
 ## Supported Compilers
@@ -30,10 +30,10 @@ using ST::operator""_c; //in your namespace
 ```
 
 ## Tutorial
-`TypeTag<T>` and `typetag<T>` are the basic building blocks here. For better distinction, TitleCase symbols here represent types and snake_cases represent values, which can be variables, consts or functions. `TypeTag<T>` is a wrapper type that contains type predicates and trait functions for `T`, and `typetag<T>` is the only constexpr instance of the wrapper, that can be used as a value, passed around, or forcing template argument deduction.
+`tag<T>` and `tag<T>` are the basic building blocks here. For better distinction, TitleCase symbols here represent types and snake_cases represent values, which can be variables, consts or functions. `Tag<T>` is a wrapper type that contains type predicates and trait functions for `T`, and `tag<T>` is the only constexpr instance of the wrapper, that can be used as a value, passed around, or forcing template argument deduction.
 
 ### Getting the Inner Type
-From `TypeTag<T>`, use `TypeTag<T>::type` for the actual wrapped type. From an instance of `typetag<T>` which can be an alias without mentioning `T`, use `decltype(tag)::type`, this is useful when the type tag itself is the result of a more complex type deduction:
+From `Tag<T>`, use `Tag<T>::type` for the actual wrapped type. From an instance of `tag<T>` which can be an alias without mentioning `T`, use `decltype(tag)::type`, this is useful when the type tag itself is the result of a more complex type deduction:
 
 ```cpp
 constexpr auto some_advanced_type_tag = <...>;//omitted
@@ -46,9 +46,9 @@ Alternatively, it is possible to use TOTYPE(tag) macro for this.
 Type tag of the same type `T` are equal. Type tag of different types are unequal. Types are strictly compared, i.e. sensitive to const-volatile modifiers and references. The comparisons happens at compile time and can be tested in `static_assert`s:
 
 ```cpp
-typetag<int> == typetag<int>                                //true
-typetag<T> == typetag<int>                                  //true if T is int
-typetag<const std::string&> == typetag<std::string>         //false
+tag<int> == tag<int>                                //true
+tag<T> == tag<int>                                  //true if T is int
+tag<const std::string&> == tag<std::string>         //false
 ```
 
 ### Type Transformation
@@ -56,9 +56,9 @@ Now that we've converted types and their properties to tag values, type transfor
 We can manipulate types just by `+/-` modifier flags, like this:
 
 ```cpp
-typetag<int> + lvalue_reference_tag == typetag<int&>    //true
-typetag<int&> - lvalue_reference_tag == typetag<int>    //true
-typetag<T> + const_qualifier + lvalue_reference_tag == typetag<const T&>    //true
+tag<int> + lvalue_reference_tag == tag<int&>    //true
+tag<int&> - lvalue_reference_tag == tag<int>    //true
+tag<T> + const_qualifier_tag + lvalue_reference_tag == tag<const T&>    //true
 ```
 
 This may look redundant at first, since one can refer to `const T&` when `T` is already in the context, but it will come in handy when the type itself is generic and compound, like in this case:
@@ -67,7 +67,7 @@ This may look redundant at first, since one can refer to `const T&` when `T` is 
 template<class T>
 void my_generic_func(T&& t)
 {
-    constexpr auto T_noref = typetag<T> - reference_tag;
+    constexpr auto T_noref = tag<T> - reference_tag;
     my_generic_impl(std::forward<T>(t), T_noref.category(), T_noref.size);
 }
 ```
@@ -77,21 +77,20 @@ All possible combinations are listed here: (still under development)
  | Type                        | Constant                        |
  | :-------------------------- | :------------------------------ |
  | ReferenceTag                | reference_tag                   |
+ | PointerTag                  | pointer_tag                     |
  | LValueReferenceTag          | lvalue_reference_tag            |
  | RValueReferenceTag          | rvalue_reference_tag            |
- | ConstQualifierTag           | const_qualifier                 |
+ | ConstQualifierTag           | const_qualifier_tag             |
 
 
 ### Type Traits
-`TypeTag<T>::size` is a constexpr integral constant holding sizeof(T).
+`Tag<T>::size()` is a constexpr function returning sizeof(T) as an integral constant.
 
 ```cpp
-static_assert(typetag<int>.size == 4_c, ""); //should be true most of the time :)
-                                             //don't worry about .size taking memory, it is static constexpr
-                                             //but we use '.' as syntactic sugar
+static_assert(tag<int>.size() == 4_c, ""); //should be true most of the time :)
 ```
 
-`TypeTag<T>::category()` is a constexpr function that returns one of these type category tags:
+`Tag<T>::category()` is a constexpr function that returns one of these type category tags:
 
  | Type                        | Constant                        |
  | :-------------------------- | :------------------------------ |
@@ -110,22 +109,14 @@ static_assert(typetag<int>.size == 4_c, ""); //should be true most of the time :
  | PointerToMemberFunctionTag  | pointer_to_member_object_tag    |
  | PointerToMemberObjectTag    | pointer_to_member_function_tag  |
 
-```cpp
-typetag<int>.category() == integral_tag //true
-```
-
-Alternatively, the library provides a free function `type_category` that has a similar usage:
 
 ```cpp
-type_category(3) == integral_tag            //true, type deduced from argument
-type_category<int>() == integral_tag        //true, argument is optional
-type_category(typetag<int>) == integral_tag //true, type deduced from argument
-type_category(void)                         //doesn't work!
-type_category(typetag<void>) == void_tag    //true, deduced from argument
-type_category<void>() == void_tag           //true
-type_category(&C::f) == pointer_to_member_function_tag     //true for member function f in class C
+tag<int>.category() == integral_tag //true
+tag<void>.category() == void_tag //true
+tag<decltype(&C::f)> == pointer_to_member_function_tag     //true for member function f in class C
 ```
 
+Alternatively, the library provides an equivalent free function `type_category`.
 Furthermore, a helper type alias `TypeCategory<T>` refers to the same result but as a type:
 
 ```cpp
