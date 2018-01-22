@@ -4,7 +4,7 @@
     * [Tag Comparison](#tag-comparison)
 * [Type Categories](#type-categories)
     * [List of Type Categories](#list-of-type-categories)
-    * [type_category (Template Function)](#typecategory-template-function)
+    * [type_category (Template Function)](#type_category-template-function)
     * [TypeCategory (Alias Template)](#typecategory-alias-template)
 
 # `None` (Class), `none` (Constant)
@@ -32,6 +32,7 @@ The basic building block and the central type in the library. `Tag<T>` is a wrap
 
 ## Tag Comparison
 Type tag of the same type T are equal. Type tag of different types are unequal. Types are strictly compared, i.e. sensitive to const-volatile modifiers and references. The result of comparison is one of the `Integral_Constant<bool, ?>` values.
+
  | Expression                     | Value        |
  | :----------------------------- | :----------- |
  | `tag<int> == tag<int>`         | `true_c`     |
