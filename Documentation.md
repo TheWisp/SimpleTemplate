@@ -43,6 +43,7 @@ Type tag of the same type T are equal. Type tag of different types are unequal. 
 A group of tags that indicate the main category of a type, for example, `IntegralTag` is the category of `int`, `long` and `char` types. Type category tags are simple structs (i.e. no template parameter) and have no members. There is a `constexpr` constant representing the only possible value for each type category.
 
 ## List of Type Categories
+
  | Type Category Type           | Type Category Constant            | Matching Types
  | :--------------------------- | :-------------------------------- | :---
  | `VoidTag`                    | `void_tag`                        | `void`
@@ -64,6 +65,7 @@ Some type category tags - `PointerTag`, `LValueReferenceTag` and `RValueReferenc
 
 Type categories are meant to be compared to each other for type branching purpose.
 Any type category tag equals to itself but unequals to any other category, for instance:
+
  | Expression                                 | Value                    |
  | :----------------------------------------- | :----------------------- |
  | `void_tag == void_tag`                     | `true_c`                 |
