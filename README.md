@@ -1,3 +1,6 @@
+## Documentation
+For more details, visit the [Documentation](Documentation.md).
+
 ## What's the Simple Template Library?
 Simple Template is a single-header, small, MSVC / GCC / Clang compatible, C++14 template metaprogramming library. 
 
