@@ -43,10 +43,14 @@ Type tag of the same type T are equal. Type tag of different types are unequal. 
  
 ## `size` (Static Member Function)
 Gets the size of the wrapped type as an `IntegralConstant`. Integral constants are more helpful than plain `constexpr` numbers when used in further compile-time deduction and branching scenarios.
+When the type's size cannot be taken, the result is of type `None`.
 
  | Expression                     | Value        |
  | :----------------------------- | :----------- |
  | `tag<std::uint32_t>.size()`    | `4_c`        |
+ | `Tag<std::uint32_t>::size()`   | `4_c`        |
+ | `tag<void>.size()`             | `none`       |
+ | `tag<T[]>.size()`              | `none`       |
 
 ## `category` (Static Member Function)
 Equivalent to calling [type_category (Template Function)](#type_category-template-function) for the wrapped type.
