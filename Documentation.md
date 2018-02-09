@@ -46,7 +46,7 @@ Gets the size of the wrapped type as an `IntegralConstant`. Integral constants a
 
  | Expression                     | Value        |
  | :----------------------------- | :----------- |
- | `tag<std::uint32_t>.size()     | `4_c`        |
+ | `tag<std::uint32_t>.size()`    | `4_c`        |
 
 ## `category` (Static Member Function)
 Equivalent to calling [type_category (Template Function)](#type_category-template-function) for the wrapped type.
