@@ -2,6 +2,8 @@
 * [`None` (Class), `none` (Constant)](#none-class-none-constant)
 * [`Tag<T>` (Template Class), `tag<T>` (Variable Template)](#tagt-template-class-tagt-variable-template)
     * [Tag Comparison](#tag-comparison)
+    * [`size` (Static Member Function)](#size-static-member-function)
+    * [`category` (Static Member Function)](#category-static-member-function)
 * [Type Categories](#type-categories)
     * [List of Type Categories](#list-of-type-categories)
     * [type_category (Template Function)](#type_category-template-function)
@@ -38,6 +40,11 @@ Type tag of the same type T are equal. Type tag of different types are unequal. 
  | `tag<int> == tag<int>`         | `true_c`     |
  | `tag<int> == tag<bool>`        | `false_c`    |
  | `tag<int> == tag<const int>`   | `false_c`    |
+ 
+## `size` (Static Member Function)
+
+## `category` (Static Member Function)
+Equivalent to calling [type_category (Template Function)](#type_category-template-function) for the wrapped type.
 
 # Type Categories
 A group of tags that indicate the main category of a type, for example, `IntegralTag` is the category of `int`, `long` and `char` types. Type category tags are simple structs (i.e. no template parameter) and have no members. There is a `constexpr` constant representing the only possible value for each type category.
