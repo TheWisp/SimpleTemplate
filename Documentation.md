@@ -9,6 +9,7 @@
     * [type_category (Template Function)](#type_category-template-function)
     * [TypeCategory (Alias Template)](#typecategory-alias-template)
 * [Type Category and Qualifier Transformation](#type-category-and-qualifier-transformation)
+    * [`ConstQualifierTag` (Class), `const_qualifier_tag` (Constant)](#constqualifiertag-class-const-qualifier-tag-constant)
 
 # `None` (Class), `none` (Constant)
 `struct None`, A special tag indicating "nothing" or the neutral type. Can be returned by type trait functions when failing to get meaningful result. `None` is designed to be a more user-friendly replacement to compilation errors; It gives the user a chance to validate the type result. 
@@ -116,6 +117,9 @@ A type tag can be transformed to a const qualified or unqualified, added referen
  | `tag<int&> - lvalue_reference_tag`                   | `tag<int>`               |
  | `tag<T> + const_qualifier_tag + lvalue_reference_tag`| `tag<const T&>`          |
  | `tag<T*> - pointer_tag`                              | `tag<T>`                 |
+ | `tag<int(&)(double)> - lvalue_reference_tag`         | `tag<int(double)>`       |
  
 The operations are defined between `TypeTag<T>` and `LValueReferenceTag`, `RValueReferenceTag`, `PointerTag`, `ConstQualifierTag`.
 
+## `ConstQualifierTag` (Class), `const_qualifier_tag` (Constant)
+The type and constant representing `const`ness qualifier of a type.
